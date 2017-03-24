@@ -1,7 +1,10 @@
 package edu.rutgers.winlab.simulator.core;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public abstract class Node {
 
@@ -32,7 +35,6 @@ public abstract class Node {
     private final String _name;
     private final HashMap<Node, Link> _neighbors = new HashMap<>();
     private final EventHandlerQueue<ISerializable> _incomingQueue;
-    private final Action _recevePacketAction;
 
     public Node(String name, SimulatorQueue<ISerializable> innerIncomingQueue) {
         _name = name;
@@ -43,12 +45,13 @@ public abstract class Node {
             s.addEvent(processPacketAction, parameter);
             return DEFAULT_PROCESS_DELAY;
         });
-        _recevePacketAction = (args) -> {
-            _incomingQueue.enqueue((ISerializable) args[0], false);
-        };
     }
 
     protected abstract long processPacket(Serial<ISerializable> s, ISerializable param);
+
+    private void receivePacket(ISerializable packet) {
+        _incomingQueue.enqueue(packet, false);
+    }
 
     public String getName() {
         return _name;
@@ -82,6 +85,7 @@ public abstract class Node {
         private final long _delay;
         private final EventHandlerQueue<ISerializable> _outgoingQueue;
         private final Serial.SerialAction<ISerializable> _linkPacketProcessor;
+        private final LinkedList<ISerializable> _inTransit = new LinkedList<>();
         private long _totalTraffic = 0;
         private int _totalPacketCount = 0;
         private boolean _expired;
@@ -91,17 +95,31 @@ public abstract class Node {
             this._bandwidthInBps = bandwidthInBps;
             this._delay = delay;
             this._expired = false;
-            this._linkPacketProcessor = (s, param) -> {
-                _totalPacketCount++;
-                _totalTraffic += param.getSize();
-                long transmitTime = getSendTime(param, _bandwidthInBps);
-                EventQueue.addEvent(EventQueue.now() + transmitTime + _delay, _targetNode._recevePacketAction, param);
+            this._linkPacketProcessor = (s, param) -> processSendPacket(s, param);
+            _outgoingQueue = new EventHandlerQueue<>(innerOutgoingQueue, _linkPacketProcessor);
+        }
+
+        private long processSendPacket(Serial<ISerializable> s, ISerializable param) {
+            _inTransit.addLast(param);
+            long transmitTime = getSendTime(param, _bandwidthInBps);
+            EventQueue.addEvent(EventQueue.now() + transmitTime + _delay, (args) -> processPacketArriveOnOther(args), param);
 
 //                System.out.printf("[%d] L %s->%s, finish:%d, receive:%d%n", EventQueue.now(), Node.this, _targetNode,
 //                        EventQueue.now() + transmitTime, EventQueue.now() + transmitTime + _delay);
-                return transmitTime;
-            };
-            _outgoingQueue = new EventHandlerQueue<>(innerOutgoingQueue, _linkPacketProcessor);
+            return transmitTime;
+        }
+
+        private void processPacketArriveOnOther(Object... args) {
+            if (_expired) {
+                return;
+            }
+            ISerializable pkt = _inTransit.removeFirst();
+            if (pkt != args[0]) {
+                throw new RuntimeException("Should not reach here... ");
+            }
+            _totalPacketCount++;
+            _totalTraffic += pkt.getSize();
+            _targetNode.receivePacket(pkt);
         }
 
         public boolean isExpired() {
@@ -134,8 +152,14 @@ public abstract class Node {
         }
 
         //TODO
-        public void disConnect() {
+        public void disConnect(Consumer<ISerializable> failedPacketHandler) {
             _expired = true;
+            while (!_inTransit.isEmpty()) {
+                failedPacketHandler.accept(_inTransit.removeFirst());
+            }
+            // iterate through _outgoing queue and then call failed packet handler, clear outgoing queue
+            //_outgoingQueue.clear();
+            
         }
     }
 
