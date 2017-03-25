@@ -2,7 +2,6 @@ package edu.rutgers.winlab.simulator.core;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -14,7 +13,7 @@ public abstract class Node {
         return packet.getSize() * EventQueue.SECOND / bandwidthInBps;
     }
 
-    public static void linkNodes(Node n1, Node n2,
+    public static void connectNodes(Node n1, Node n2,
             SimulatorQueue<ISerializable> n1ToN2Queue,
             SimulatorQueue<ISerializable> n2ToN1Queue,
             int bandwidthInBps, long delay) {
@@ -29,7 +28,8 @@ public abstract class Node {
         if (!n1._neighbors.containsKey(n2)) {
             throw new IllegalArgumentException(String.format("%s and %s not neighbors", n1, n2));
         }
-        //TODO
+        n1.removeLink(n2);
+        n2.removeLink(n1);
     }
 
     private final String _name;
@@ -49,6 +49,8 @@ public abstract class Node {
 
     protected abstract long processPacket(Serial<ISerializable> s, ISerializable param);
 
+    protected abstract void handleFailedPacket(ISerializable packet);
+
     private void receivePacket(ISerializable packet) {
         _incomingQueue.enqueue(packet, false);
     }
@@ -60,9 +62,11 @@ public abstract class Node {
     protected void sendPacket(ISerializable packet, Node target, boolean prioritized) {
         Link l = _neighbors.get(target);
         if (l == null) {
-            throw new IllegalArgumentException(String.format("%s cannot send packet to %s, not neighbor", this, target));
+//            throw new IllegalArgumentException(String.format("%s cannot send packet to %s, not neighbor", this, target));
+            handleFailedPacket(packet);
+        } else {
+            l.sendPacket(packet, prioritized);
         }
-        l.sendPacket(packet, prioritized);
     }
 
     public void forEachNeighbor(BiConsumer<Node, Link> consumer) {
@@ -76,6 +80,11 @@ public abstract class Node {
 
     private void addLink(Node target, SimulatorQueue<ISerializable> innerOutgoingQueue, int bandwidthInBps, long delay) {
         _neighbors.put(target, new Link(target, innerOutgoingQueue, bandwidthInBps, delay));
+    }
+
+    private void removeLink(Node target) {
+        Link l = _neighbors.remove(target);
+        l.disConnect((s) -> handleFailedPacket(s));
     }
 
     public class Link {
@@ -159,7 +168,7 @@ public abstract class Node {
             }
             // iterate through _outgoing queue and then call failed packet handler, clear outgoing queue
             //_outgoingQueue.clear();
-            
+            _outgoingQueue.clear(failedPacketHandler);
         }
     }
 

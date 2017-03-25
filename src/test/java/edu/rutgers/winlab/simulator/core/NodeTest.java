@@ -75,7 +75,7 @@ public class NodeTest {
 
     }
 
-    private static class NodeServer extends EndHost {
+    private static class NodeServer extends ReliableEndHost {
 
         public NodeServer(String name, SimulatorQueue<ISerializable> innerIncomingQueue) {
             super(name, innerIncomingQueue);
@@ -88,6 +88,7 @@ public class NodeTest {
             RandomPayload ret = new RandomPayload(orig.getId(), this, orig.getFrom(), orig.getSize() * 2);
 
             s.addLastEvent((ss, p) -> {
+                System.out.printf("[%d] AS %s send: %s%n", EventQueue.now(), NodeServer.this, p);
                 sendPacket(p, false);
                 return 0 * EventQueue.MILLI_SECOND;
             }, ret);
@@ -105,6 +106,11 @@ public class NodeTest {
         protected long processPacket(Serial<ISerializable> s, ISerializable param) {
             System.out.printf("[%d] AC %s received %s%n", EventQueue.now(), this, param);
             return 0;
+        }
+
+        @Override
+        protected void handleFailedPacket(ISerializable packet) {
+            System.out.printf("[%d] AC Lost: %s%n", EventQueue.now(), packet);
         }
     }
 
@@ -133,6 +139,11 @@ public class NodeTest {
             }, param);
             return _processingDelay;
         }
+
+        @Override
+        protected void handleFailedPacket(ISerializable packet) {
+            System.out.printf("[%d] R Lost: %s%n", EventQueue.now(), packet);
+        }
     }
 
     @Test
@@ -141,8 +152,8 @@ public class NodeTest {
         NodeRouter r2 = new NodeRouter("R2", EventQueue.MILLI_SECOND, new FIFOQueue<>("R2In", Integer.MAX_VALUE));
         NodeRouter r3 = new NodeRouter("R3", EventQueue.MILLI_SECOND, new FIFOQueue<>("R3In", Integer.MAX_VALUE));
 
-        Node.linkNodes(r1, r2, new FIFOQueue<>("R1->R2", Integer.MAX_VALUE), new FIFOQueue<>("R2->R1", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 1 * EventQueue.MILLI_SECOND);
-        Node.linkNodes(r1, r3, new FIFOQueue<>("R1->R3", Integer.MAX_VALUE), new FIFOQueue<>("R3->R1", Integer.MAX_VALUE), 2 * ISerializable.M_BIT, 6 * EventQueue.MILLI_SECOND);
+        Node.connectNodes(r1, r2, new FIFOQueue<>("R1->R2", Integer.MAX_VALUE), new FIFOQueue<>("R2->R1", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 1 * EventQueue.MILLI_SECOND);
+        Node.connectNodes(r1, r3, new FIFOQueue<>("R1->R3", Integer.MAX_VALUE), new FIFOQueue<>("R3->R1", Integer.MAX_VALUE), 2 * ISerializable.M_BIT, 6 * EventQueue.MILLI_SECOND);
 
         System.out.printf("Neighbors of %s%n", r1);
         r1.forEachNeighbor((n, l) -> {
@@ -156,14 +167,23 @@ public class NodeTest {
         EndHost n2 = new NodeServer("N2", new FIFOQueue<>("N2In", Integer.MAX_VALUE));
         NodeRouter r = new NodeRouter("R", EventQueue.MILLI_SECOND, new FIFOQueue<>("RIN", Integer.MAX_VALUE));
 
-//        n1.connect(r, new FIFOQueue<>("N1->R", Integer.MAX_VALUE), new FIFOQueue<>("R->N1", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
-//        n2.connect(r, new FIFOQueue<>("N2->R", Integer.MAX_VALUE), new FIFOQueue<>("R->N2", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
-//        r.addRouting(n1, n1);
-//        r.addRouting(n2, n2);
-//
-//        for (int i = 0; i < 2; i++) {
-//            n1.sendPacket(new RandomPayload(i, n1, n2, 3 * ISerializable.K_BIT), false);
-//        }
+        n1.move(r, new FIFOQueue<>("N1->R", Integer.MAX_VALUE), new FIFOQueue<>("R->N1", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
+        n2.move(r, new FIFOQueue<>("N2->R", Integer.MAX_VALUE), new FIFOQueue<>("R->N2", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
+        r.addRouting(n1, n1);
+        r.addRouting(n2, n2);
+
+        for (int i = 0; i < 2; i++) {
+            n1.sendPacket(new RandomPayload(i, n1, n2, 3 * ISerializable.K_BIT), false);
+        }
+
+        EventQueue.addEvent(15000, (args) -> {
+            n2.disconnect();
+        });
+
+        EventQueue.addEvent(20000, (args) -> {
+            n2.move(r, new FIFOQueue<>("N2->R", Integer.MAX_VALUE), new FIFOQueue<>("R->N2", Integer.MAX_VALUE), 1 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
+        });
+
         EventQueue.run();
     }
 }
