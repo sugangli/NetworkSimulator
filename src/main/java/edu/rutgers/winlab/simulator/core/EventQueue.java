@@ -42,8 +42,8 @@ public class EventQueue {
         while (!_events.isEmpty()) {
             Event e = _events.poll();
 //            System.out.printf("run() now:%f%s\n", e.Time, e.action);
-            _now = e.Time;
-            e.doEvent();
+            _now = e.time;
+            e.execute();
         }
 
     }
@@ -65,26 +65,26 @@ public class EventQueue {
 
     private static class Event implements Comparable<Event> {
 
-        public Long Time;
-        public Long Serial;
-        public Action Action;
-        public Object[] Args;
+        public Long time;
+        public Long serial;
+        public Action action;
+        public Object[] args;
 
-        public void doEvent() {
-            Action.execute(Args);
+        public void execute() {
+            action.execute(args);
         }
 
         public Event(long serial, long time, Action action, Object... args) {
-            Serial = serial;
-            this.Time = time;
-            this.Action = action;
-            this.Args = args;
+            this.serial = serial;
+            this.time = time;
+            this.action = action;
+            this.args = args;
         }
 
         @Override
         public int compareTo(Event o) {
-            int ret = this.Time.compareTo(o.Time);
-            return ret == 0 ? (this.Serial.compareTo(o.Serial)) : ret;
+            int ret = this.time.compareTo(o.time);
+            return ret == 0 ? (this.serial.compareTo(o.serial)) : ret;
         }
 
     }

@@ -2,14 +2,14 @@ package edu.rutgers.winlab.simulator.core;
 
 public abstract class SimulatorQueue<T> {
 
-    private final String Name;
+    private final String _name;
 
     public String getName() {
-        return Name;
+        return _name;
     }
 
-    public SimulatorQueue(String Name) {
-        this.Name = Name;
+    public SimulatorQueue(String name) {
+        this._name = name;
     }
 
     public abstract int getCapacity();

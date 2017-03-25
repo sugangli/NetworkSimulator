@@ -82,7 +82,7 @@ public class NodeTest {
         }
 
         @Override
-        protected long processPacket(Serial<ISerializable> s, ISerializable param) {
+        protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
             System.out.printf("[%d] AS %s received %s%n", EventQueue.now(), this, param);
             RandomPayload orig = (RandomPayload) param;
             RandomPayload ret = new RandomPayload(orig.getId(), this, orig.getFrom(), orig.getSize() * 2);
@@ -103,13 +103,13 @@ public class NodeTest {
         }
 
         @Override
-        protected long processPacket(Serial<ISerializable> s, ISerializable param) {
+        protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
             System.out.printf("[%d] AC %s received %s%n", EventQueue.now(), this, param);
             return 0;
         }
 
         @Override
-        protected void handleFailedPacket(ISerializable packet) {
+        protected void _handleFailedPacket(ISerializable packet) {
             System.out.printf("[%d] AC Lost: %s%n", EventQueue.now(), packet);
         }
     }
@@ -130,24 +130,26 @@ public class NodeTest {
         }
 
         @Override
-        protected long processPacket(Serial<ISerializable> s, ISerializable param) {
-            s.addEvent((ss, p) -> {
+        protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
+            s.addEvent((Serial<ISerializable> ss, ISerializable p) -> {
                 RandomPayload rp = (RandomPayload) p;
                 Node dest = _routingTable.get(rp.getTo());
-                sendPacket(rp, dest, false);
+                _sendPacket(rp, dest, false);
                 return 0;
             }, param);
             return _processingDelay;
         }
 
         @Override
-        protected void handleFailedPacket(ISerializable packet) {
+        protected void _handleFailedPacket(ISerializable packet) {
             System.out.printf("[%d] R Lost: %s%n", EventQueue.now(), packet);
         }
     }
 
     @Test
     public void test1() {
+        EventQueue.reset();
+
         NodeRouter r1 = new NodeRouter("R1", EventQueue.MILLI_SECOND, new FIFOQueue<>("R1In", Integer.MAX_VALUE));
         NodeRouter r2 = new NodeRouter("R2", EventQueue.MILLI_SECOND, new FIFOQueue<>("R2In", Integer.MAX_VALUE));
         NodeRouter r3 = new NodeRouter("R3", EventQueue.MILLI_SECOND, new FIFOQueue<>("R3In", Integer.MAX_VALUE));
@@ -163,6 +165,8 @@ public class NodeTest {
 
     @Test
     public void test2() {
+        EventQueue.reset();
+
         EndHost n1 = new NodeClient("N1", new FIFOQueue<>("N1In", Integer.MAX_VALUE));
         EndHost n2 = new NodeServer("N2", new FIFOQueue<>("N2In", Integer.MAX_VALUE));
         NodeRouter r = new NodeRouter("R", EventQueue.MILLI_SECOND, new FIFOQueue<>("RIN", Integer.MAX_VALUE));

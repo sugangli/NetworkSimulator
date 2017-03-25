@@ -30,8 +30,8 @@ public final class Serial<T> {
         }
     }
 
-    private List<SerialEventDataStructure<T>> _events = new ArrayList<>();
-    private List<SerialEventDataStructure<T>> _lastEvents = new ArrayList<>();
+    private final List<SerialEventDataStructure<T>> _events = new ArrayList<>();
+    private final List<SerialEventDataStructure<T>> _lastEvents = new ArrayList<>();
     private final List<Action> _serialFinishedHandlers = new ArrayList<>();
 
     public Serial(SerialAction<T> firstEvent, T parameter) {
@@ -55,21 +55,21 @@ public final class Serial<T> {
         _serialFinishedHandlers.remove(a);
     }
 
-    private void _serialFinished() {
+    private void _fireSerialFinished() {
         _serialFinishedHandlers.forEach((a) -> {
             a.execute(this);
         });
     }
 
     private void _scheduleNextEvent(long time) {
-        EventQueue.addEvent(time, _runEventAction);
+        EventQueue.addEvent(time, this::_runEvent);
     }
 
-    private final Action _runEventAction = (Object... args) -> {
+    private void _runEvent(Object... args) {
         if (_events.size() > 0) {
 
             SerialEventDataStructure<T> seds = _events.get(0);
-            long execute_time = seds.getE().execute(Serial.this, seds.parameter);
+            long execute_time = seds.getE().execute(this, seds.parameter);
             long nextEventTime = EventQueue.now() + execute_time;
             _events.remove(0);
 //	    		System.out.printf("RunEventAction.execute: now:%f %f %s%n", EventQueue.Now(), execute_time, seds.getParameter());
@@ -80,16 +80,16 @@ public final class Serial<T> {
             if (_lastEvents.size() > 0) {
 
                 SerialEventDataStructure<T> seds = _lastEvents.get(0);
-                long execute_time = seds.getE().execute(Serial.this, seds.parameter);
+                long execute_time = seds.getE().execute(this, seds.parameter);
                 long nextEventTime = EventQueue.now() + execute_time;
                 _lastEvents.remove(0);
 //	    			System.out.printf("RunEventAction.execute: now:%f %f %s%n", EventQueue.Now(), execute_time, seds.getParameter());
                 _scheduleNextEvent(nextEventTime);
 
             } else {
-                _serialFinished();
+                _fireSerialFinished();
             }
 
         }
-    };
+    }
 }

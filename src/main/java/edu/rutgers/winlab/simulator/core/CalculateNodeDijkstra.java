@@ -6,9 +6,6 @@
 package edu.rutgers.winlab.simulator.core;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -24,7 +21,7 @@ public class CalculateNodeDijkstra {
         private long _distance;
 
         public DistanceInfo(Node prev, long distance) {
-            set(prev, distance);
+            _set(prev, distance);
         }
 
         public Node getPrev() {
@@ -35,52 +32,52 @@ public class CalculateNodeDijkstra {
             return _distance;
         }
 
-        private void set(Node prev, long distance) {
+        private void _set(Node prev, long distance) {
             this._prev = prev;
             this._distance = distance;
         }
 
     }
 
-    private Node minNode;
-    private long minDist;
-    private final HashMap<Node, DistanceInfo> linkedNodes = new HashMap<>();
+    private Node _minNode;
+    private long _minDist;
+    private final HashMap<Node, DistanceInfo> _linkedNodes = new HashMap<>();
 
     public CalculateNodeDijkstra(Node from, Function<Node.Link, Long> distanceCalculator) {
         HashMap<Node, DistanceInfo> pending = new HashMap<>();
-        minNode = from;
-        minDist = 0;
-        pending.put(from, new DistanceInfo(from, minDist));
+        _minNode = from;
+        _minDist = 0;
+        pending.put(from, new DistanceInfo(from, _minDist));
         do {
-            linkedNodes.put(minNode, pending.remove(minNode));
-            minNode.forEachNeighbor((neighbor, link) -> {
-                if (!linkedNodes.containsKey(neighbor)) {
+            _linkedNodes.put(_minNode, pending.remove(_minNode));
+            _minNode.forEachNeighbor((neighbor, link) -> {
+                if (!_linkedNodes.containsKey(neighbor)) {
                     DistanceInfo di = pending.get(neighbor);
-                    long newDistance = minDist + distanceCalculator.apply(link);
+                    long newDistance = _minDist + distanceCalculator.apply(link);
                     if (di == null) {
-                        pending.put(neighbor, new DistanceInfo(minNode, newDistance));
+                        pending.put(neighbor, new DistanceInfo(_minNode, newDistance));
                     } else if (newDistance < di.getDistance()) {
-                        di.set(minNode, newDistance);
+                        di._set(_minNode, newDistance);
                     }
                 }
             });
-            minNode = null;
+            _minNode = null;
             pending.entrySet().forEach((entry) -> {
                 long distance = entry.getValue().getDistance();
-                if (minNode == null || minDist > distance) {
-                    minNode = entry.getKey();
-                    minDist = distance;
+                if (_minNode == null || _minDist > distance) {
+                    _minNode = entry.getKey();
+                    _minDist = distance;
                 }
             });
-        } while (minNode != null);
+        } while (_minNode != null);
 
     }
 
     public void forEachDistance(BiConsumer<Node, DistanceInfo> con) {
-        linkedNodes.forEach(con);
+        _linkedNodes.forEach(con);
     }
-    
+
     public DistanceInfo getDistanceInfo(Node n) {
-        return linkedNodes.get(n);
+        return _linkedNodes.get(n);
     }
 }

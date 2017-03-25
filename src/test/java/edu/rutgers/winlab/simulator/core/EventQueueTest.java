@@ -68,6 +68,8 @@ public class EventQueueTest {
      */
     @org.junit.Test
     public void test1() {
+        EventQueue.reset();
+
         EventQueue.addEvent(EventQueue.now() + EventQueue.MILLI_SECOND, Test1, 5);
         EventQueue.addEvent(EventQueue.now() + EventQueue.MILLI_SECOND, Test2, 5);
         EventQueue.run();

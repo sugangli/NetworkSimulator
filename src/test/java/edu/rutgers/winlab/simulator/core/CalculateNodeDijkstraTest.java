@@ -5,13 +5,11 @@
  */
 package edu.rutgers.winlab.simulator.core;
 
-import java.util.function.BiConsumer;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -52,12 +50,12 @@ public class CalculateNodeDijkstraTest {
         }
 
         @Override
-        protected long processPacket(Serial<ISerializable> s, ISerializable param) {
+        protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         @Override
-        protected void handleFailedPacket(ISerializable packet) {
+        protected void _handleFailedPacket(ISerializable packet) {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
@@ -80,7 +78,7 @@ public class CalculateNodeDijkstraTest {
         myConnectNodes(ns[5], ns[6], 9, 1);
 
         CalculateNodeDijkstra c = new CalculateNodeDijkstra(ns[1], (l) -> l.getDelay() * l.getBandwidthInBps());
-        c.forEachDistance((n, d)->{
+        c.forEachDistance((n, d) -> {
             System.out.printf("%s: %s - %d%n", n, d.getPrev(), d.getDistance());
         });
     }

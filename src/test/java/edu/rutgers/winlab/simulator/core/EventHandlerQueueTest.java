@@ -39,13 +39,15 @@ public class EventHandlerQueueTest {
 
     @Test
     public void test1() {
+        EventQueue.reset();
+
         Serial.SerialAction<Integer> a = new Serial.SerialAction<Integer>() {
             @Override
             public long execute(Serial<Integer> s, Integer parameter) {
                 System.out.printf("[%d] Event triggered, val=%d%n", EventQueue.now(), parameter);
-            if (parameter > 0) {
-                s.addEvent(this, parameter - 1);
-            }
+                if (parameter > 0) {
+                    s.addEvent(this, parameter - 1);
+                }
                 return parameter * EventQueue.MILLI_SECOND;
             }
         };

@@ -42,6 +42,8 @@ public class SerialTest {
      */
     @Test
     public void test1() {
+        EventQueue.reset();
+
         Serial.SerialAction a1 = (ss, param) -> {
             System.out.printf("[%d] A1: %d%n", EventQueue.now(), param);
             return 1 * EventQueue.SECOND;

@@ -41,18 +41,20 @@ public class TimeoutEventDispatcherTest {
      */
     @Test
     public void test1() {
+        EventQueue.reset();
+
         TimeoutEventDispatcher ted = new TimeoutEventDispatcher(EventQueue.now() + EventQueue.MILLI_SECOND, (args) -> {
             System.out.printf("[%d] Timeout! Test\n", EventQueue.now());
         });
         ted.delay(EventQueue.now() + 2 * EventQueue.MILLI_SECOND);
 
-        EventQueue.addEvent(EventQueue.now() + 1500 * EventQueue.MICRO_SECOND, (args)->{
+        EventQueue.addEvent(EventQueue.now() + 1500 * EventQueue.MICRO_SECOND, (args) -> {
             long newTime = EventQueue.now() + 2 * EventQueue.MILLI_SECOND;
             System.out.printf("[%d] Test2 delay to %d\n", EventQueue.now(), newTime);
             ted.delay(newTime);
         });
-        
-        EventQueue.addEvent(EventQueue.now() + 3499 * EventQueue.MICRO_SECOND, (args)->{
+
+        EventQueue.addEvent(EventQueue.now() + 3499 * EventQueue.MICRO_SECOND, (args) -> {
             System.out.printf("[%d] Test3 Cancel it!\n", EventQueue.now());
             ted.cancel();
         });
