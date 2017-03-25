@@ -139,8 +139,12 @@ public abstract class Node {
             return _targetNode;
         }
 
-        public double getDelay() {
+        public long getDelay() {
             return _delay;
+        }
+
+        public int getBandwidthInBps() {
+            return _bandwidthInBps;
         }
 
         @Override
