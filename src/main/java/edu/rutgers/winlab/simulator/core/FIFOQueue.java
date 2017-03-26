@@ -32,6 +32,10 @@ public class FIFOQueue<T> extends SimulatorQueue<T> {
         } else {
             _innerQueue.addLast(item);
         }
+        
+        /*
+         * if queue is full ( size > capacity ), we pop element out from queue
+        */
         int diff = getSize() - _capacity;
         while (diff > 0 && _innerQueue.size() > 0) {
             T node = _innerQueue.getLast();

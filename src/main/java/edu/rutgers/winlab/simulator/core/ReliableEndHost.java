@@ -22,8 +22,7 @@ public abstract class ReliableEndHost extends EndHost {
     @Override
     public void move(Node newFirstHop, SimulatorQueue<ISerializable> thisToFirstHopQueue, SimulatorQueue<ISerializable> firstHopToThisQueue, int bandwidth, long delay) {
         super.move(newFirstHop, thisToFirstHopQueue, firstHopToThisQueue, bandwidth, delay);
-        pendingPackets.forEach((p) -> {
-//            System.out.printf("[%d] REH %s Resent: %s %n", EventQueue.now(), getName(), p);
+        pendingPackets.forEach(p -> {
             sendPacket(p, true);
         });
         pendingPackets.clear();
