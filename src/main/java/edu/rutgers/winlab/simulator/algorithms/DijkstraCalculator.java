@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package edu.rutgers.winlab.simulator.core;
+package edu.rutgers.winlab.simulator.algorithms;
 
+import edu.rutgers.winlab.simulator.core.Node;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -13,7 +14,7 @@ import java.util.function.Function;
  *
  * @author wuyang
  */
-public class CalculateNodeDijkstra {
+public class DijkstraCalculator {
 
     public static final class DistanceInfo {
 
@@ -43,7 +44,7 @@ public class CalculateNodeDijkstra {
     private long _minDist;
     private final HashMap<Node, DistanceInfo> _linkedNodes = new HashMap<>();
 
-    public CalculateNodeDijkstra(Node from, Function<Node.Link, Long> distanceCalculator) {
+    public DijkstraCalculator(Node from, Function<Node.Link, Long> distanceCalculator) {
         HashMap<Node, DistanceInfo> pending = new HashMap<>();
         _minNode = from;
         _minDist = 0;

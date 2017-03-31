@@ -5,6 +5,7 @@
  */
 package edu.rutgers.winlab.simulator.core;
 
+import edu.rutgers.winlab.simulator.algorithms.DijkstraCalculator;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -77,7 +78,7 @@ public class CalculateNodeDijkstraTest {
         myConnectNodes(ns[4], ns[5], 6, 1);
         myConnectNodes(ns[5], ns[6], 9, 1);
 
-        CalculateNodeDijkstra c = new CalculateNodeDijkstra(ns[1], (l) -> l.getDelay() * l.getBandwidthInBps());
+        DijkstraCalculator c = new DijkstraCalculator(ns[1], (l) -> l.getDelay() * l.getBandwidthInBps());
         c.forEachDistance((n, d) -> {
             System.out.printf("%s: %s - %d%n", n, d.getPrev(), d.getDistance());
         });
