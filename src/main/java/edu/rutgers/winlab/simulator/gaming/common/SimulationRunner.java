@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package edu.rutgers.winlab.simulator.common;
+package edu.rutgers.winlab.simulator.gaming.common;
 
 import edu.rutgers.winlab.simulator.algorithms.MDPCalculator;
 import edu.rutgers.winlab.simulator.core.FIFOQueue;
@@ -73,7 +73,7 @@ public class SimulationRunner {
         return probabilities;
     }
 
-    private static void _printProbabilities(double[] probabilities, PrintStream ps) {
+    public static void _printProbabilities(double[] probabilities, PrintStream ps) {
         int len = (int) Math.sqrt(probabilities.length);
         for (int to = 0; to < len; to++) {
             ps.printf("\t%d", to);

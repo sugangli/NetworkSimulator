@@ -8,6 +8,7 @@ public class EventHandlerQueue<T> {
     private final Serial.SerialAction<T> _eventHandler;
     private boolean _busy;
 
+    // TODO: should add handler when innerQueue drops packets
     public EventHandlerQueue(SimulatorQueue<T> innerQueue, Serial.SerialAction<T> eventHandler) {
         _innerQueue = innerQueue;
         _eventHandler = eventHandler;

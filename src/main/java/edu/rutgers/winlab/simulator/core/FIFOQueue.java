@@ -2,6 +2,7 @@ package edu.rutgers.winlab.simulator.core;
 
 import java.util.LinkedList;
 
+// TODO: should add handler when queue drops packets
 public class FIFOQueue<T> extends SimulatorQueue<T> {
 
     private final int _capacity;

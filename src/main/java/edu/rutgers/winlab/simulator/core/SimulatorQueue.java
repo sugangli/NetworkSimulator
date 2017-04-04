@@ -1,5 +1,6 @@
 package edu.rutgers.winlab.simulator.core;
 
+// TODO: should add handler when queue drops packets
 public abstract class SimulatorQueue<T> {
 
     private final String _name;

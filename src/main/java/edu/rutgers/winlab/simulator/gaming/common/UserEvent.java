@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package edu.rutgers.winlab.simulator.common;
+package edu.rutgers.winlab.simulator.gaming.common;
 
 import edu.rutgers.winlab.simulator.core.ISerializable;
 
@@ -36,5 +36,12 @@ public class UserEvent implements ISerializable {
     public int getSize() {
         return _size;
     }
+
+    @Override
+    public String toString() {
+        return String.format("UE{id:%d,size:%d,isGame:%b}", _id, _size, _gameEvent);
+    }
+    
+    
 
 }

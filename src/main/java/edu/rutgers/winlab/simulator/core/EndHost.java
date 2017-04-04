@@ -19,9 +19,9 @@ public abstract class EndHost extends Node {
 
     public void move(Node newFirstHop, SimulatorQueue<ISerializable> thisToFirstHopQueue,
             SimulatorQueue<ISerializable> firstHopToThisQueue,
-            int bandwidth, long delay) {
+            int bandwidthInBps, long delay) {
         disconnect();
-        Node.connectNodes(this, _firstHop = newFirstHop, thisToFirstHopQueue, firstHopToThisQueue, bandwidth, delay);
+        Node.connectNodes(this, _firstHop = newFirstHop, thisToFirstHopQueue, firstHopToThisQueue, bandwidthInBps, delay);
     }
 
     public void disconnect() {
