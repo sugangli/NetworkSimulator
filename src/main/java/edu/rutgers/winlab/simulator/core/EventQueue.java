@@ -14,7 +14,7 @@ public class EventQueue {
     public static void addEvent(long time, Action action, Object... args) {
         DEFAULT._addEvent(time, action, args);
     }
-
+    
     public static void run() {
         DEFAULT._run();
     }

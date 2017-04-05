@@ -108,7 +108,7 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
     }
 
     private void _sendFrame(Object... parameters) {
-        System.out.printf("[%d] SS %s send %s", EventQueue.now(), getName(), parameters[0]);
+        System.out.printf("[%d] SS %s send %s%n", EventQueue.now(), getName(), parameters[0]);
         sendPacket((Packet) parameters[0], false);
     }
 }
