@@ -85,5 +85,10 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public void addGameClient(String game, String client) {
+        // do not need to do anything, since using multicast
+    }
+
 
 }

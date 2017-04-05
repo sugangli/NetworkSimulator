@@ -15,6 +15,7 @@ import edu.rutgers.winlab.simulator.gaming.common.GameServer;
 import edu.rutgers.winlab.simulator.gaming.common.Router;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.function.Consumer;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -50,37 +51,73 @@ public class GameClientTest {
         return new FIFOQueue<>(name, Integer.MAX_VALUE);
     }
 
+    private enum GameType {
+        Traditional, VideoStreaming, Edge
+    }
+
     @Test
     public void test1() {
         EventQueue.reset();
+        final HashMap<Integer, LinkedList<Long>> packetDurations = new HashMap<>();
+        GameType type = GameType.VideoStreaming;
 
         Router r1 = new Router("R1", getDefaultQueue("R1_IN"));
+        GameClient c1, c2;
+        GameServer s;
 
-        final HashMap<Integer, LinkedList<Long>> packetDurations = new HashMap<>();
+        Consumer<UserEvent> handler = (UserEvent evt) -> {
+            LinkedList<Long> l = packetDurations.get(evt.getId());
+            l.addLast(EventQueue.now());
+        };
 
-        final GameClient c1 = new edu.rutgers.winlab.simulator.gaming.traditional.GameClient("C1",
-                getDefaultQueue("C1_IN"), "G1",
-                (UserEvent evt) -> {
-                    LinkedList<Long> l = packetDurations.get(evt.getId());
-                    l.addLast(EventQueue.now());
-                });
+        switch (type) {
+            case Traditional:
+                c1 = new edu.rutgers.winlab.simulator.gaming.traditional.GameClient("C1",
+                        getDefaultQueue("C1_IN"), "G1", handler);
+                c2 = new edu.rutgers.winlab.simulator.gaming.traditional.GameClient("C2",
+                        getDefaultQueue("C2_IN"), "G1", handler);
+                s = new edu.rutgers.winlab.simulator.gaming.traditional.GameServer("S", getDefaultQueue("S_IN"));
+                break;
+            case VideoStreaming:
+                c1 = new edu.rutgers.winlab.simulator.gaming.videostream.GameClient("C1",
+                        getDefaultQueue("C1_IN"), "G1", handler);
+                c2 = new edu.rutgers.winlab.simulator.gaming.videostream.GameClient("C2",
+                        getDefaultQueue("C2_IN"), "G1", handler);
+                s = new edu.rutgers.winlab.simulator.gaming.videostream.GameServer("S", getDefaultQueue("S_IN"));
+                break;
+            default: // edge
+                c1 = new edu.rutgers.winlab.simulator.gaming.traditional.GameClient("C1",
+                        getDefaultQueue("C1_IN"), "G1", handler);
+                c2 = new edu.rutgers.winlab.simulator.gaming.traditional.GameClient("C2",
+                        getDefaultQueue("C2_IN"), "G1", handler);
+                s = new edu.rutgers.winlab.simulator.gaming.traditional.GameServer("S", getDefaultQueue("S_IN"));
+                break;
+        }
+
         c1.move(r1, getDefaultQueue("C1->R1"), getDefaultQueue("R1->C1"), 10 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
-
-        final GameClient c2 = new edu.rutgers.winlab.simulator.gaming.traditional.GameClient("C2",
-                getDefaultQueue("C2_IN"), "G1",
-                (UserEvent evt) -> {
-                    LinkedList<Long> l = packetDurations.get(evt.getId());
-                    l.addLast(EventQueue.now());
-                });
         c2.move(r1, getDefaultQueue("C2->R1"), getDefaultQueue("R1->C2"), 10 * ISerializable.M_BIT, 30 * EventQueue.MILLI_SECOND);
 
-        
-        final GameServer s = new edu.rutgers.winlab.simulator.gaming.traditional.GameServer("S", getDefaultQueue("S_IN"));
         s.move(r1, getDefaultQueue("S->R1"), getDefaultQueue("R1->S"), 10 * ISerializable.M_BIT, 2 * EventQueue.MILLI_SECOND);
-        
+
+        // useful only for videostream gaming
+        s.addGameClient("G1", "C1");
+        s.addGameClient("G1", "C2");
+
         r1.addRouting("G1", s);
-        r1.addRouting("G1_DOWN", c1);
-        r1.addRouting("G1_DOWN", c2);
+        switch (type) {
+            case Traditional:
+                // for traditional gaming, using multicast
+                r1.addRouting("G1_DOWN", c1);
+                r1.addRouting("G1_DOWN", c2);
+                break;
+            case VideoStreaming:
+                // for videostream gaming, using unicast
+                r1.addRouting("C1", c1);
+                r1.addRouting("C2", c2);
+                break;
+            default: // Edge
+                break;
+        }
 
         for (int i = 0; i < 100; i++) {
             EventQueue.addEvent(EventQueue.now() + i * EventQueue.MILLI_SECOND * 10, (Object[] args) -> {
