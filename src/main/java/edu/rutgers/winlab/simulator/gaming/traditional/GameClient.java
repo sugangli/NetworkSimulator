@@ -36,7 +36,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
     }
 
     private static long getFirstRenderDelayTime() {
-        return getRenderProcessingTime();
+        return FRAME_INTERVAL;
     }
 
     private final LinkedList<UserEvent> _toRenders = new LinkedList<>();
@@ -55,7 +55,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
         _userInputQueue.enqueue(e, false);
     }
 
-    // make sure that render happens after the game event, add 1 micro second delay
+    // wait till the end of 1st frame to render
     private long _delayBeforeFirstRender(Serial<Integer> s, Integer parameter) {
         s.addEvent(this::_renderLogic, parameter);
         return getFirstRenderDelayTime();

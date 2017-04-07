@@ -3,13 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package edu.rutgers.winlab.simulator.gaming.traditional;
+package edu.rutgers.winlab.simulator.gaming.edge;
 
 import edu.rutgers.winlab.simulator.core.EventQueue;
 import edu.rutgers.winlab.simulator.core.ISerializable;
 import edu.rutgers.winlab.simulator.core.Serial;
 import edu.rutgers.winlab.simulator.core.SimulatorQueue;
 import edu.rutgers.winlab.simulator.gaming.common.Frame;
+import static edu.rutgers.winlab.simulator.gaming.common.GameServer.GAME_NAME_SUFFIX;
+import static edu.rutgers.winlab.simulator.gaming.common.GameServer.MAX_REFRESH_FPS;
 import edu.rutgers.winlab.simulator.gaming.common.Packet;
 import edu.rutgers.winlab.simulator.gaming.common.UserEvent;
 import java.util.HashMap;
@@ -34,7 +36,7 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
     public GameServer(String name, SimulatorQueue<ISerializable> innerIncomingQueue) {
         super(name, innerIncomingQueue);
     }
-   
+
     //wait a frame before real logic starts
     private long _beforeServerGameLogic(Serial<String> s, String gameName) {
         s.addEvent(this::_serverGameLogic, gameName);
@@ -51,17 +53,17 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
             Frame f = new Frame(getFrameSize(pendingUEs), pendingUEs);
             Packet pkt = new Packet(gameName, gameName + GAME_NAME_SUFFIX, f);
             pendingUEs.clear();
-            
-            EventQueue.addEvent(EventQueue.now() + getGameEventProcessingTime(), 
+
+            EventQueue.addEvent(EventQueue.now() + getGameEventProcessingTime(),
                     this::_sendFrame, pkt);
         }
         s.addEvent(this::_serverGameLogic, gameName);
         return EventQueue.SECOND / MAX_REFRESH_FPS;
     }
-    
+
     private void _sendFrame(Object... parameters) {
         System.out.printf("[%d] SS %s send %s%n", EventQueue.now(), getName(), parameters[0]);
-        sendPacket((Packet)parameters[0], false);
+        sendPacket((Packet) parameters[0], false);
     }
 
     @Override
@@ -81,14 +83,13 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
     }
 
     @Override
-    protected void _handleFailedPacket(ISerializable packet) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public void addGameClient(String game, String client) {
         // do not need to do anything, since using multicast
     }
 
+    @Override
+    protected void _handleFailedPacket(ISerializable packet) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
 }
