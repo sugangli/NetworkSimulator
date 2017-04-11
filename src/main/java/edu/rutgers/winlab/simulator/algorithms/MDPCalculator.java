@@ -80,7 +80,7 @@ public final class MDPCalculator {
         for (int sp = 0; sp < _serverLocations.length; sp++) {
             ps.printf("SP:%d", sp);
             for (int s = 0; s < _serverLocations.length; s++) {
-                for (int c =0; c < _clientLocations.length; c++) {
+                for (int c = 0; c < _clientLocations.length; c++) {
                     ps.printf("\t%f", _rewards[s * _serverLocations.length + c]);
                 }
             }
@@ -89,8 +89,8 @@ public final class MDPCalculator {
     }
 
     public synchronized void clearStateResults() {
-        Arrays.parallelSetAll(_stateUtilties, i->0);
-        Arrays.parallelSetAll(_stateActions, i->0);
+        Arrays.parallelSetAll(_stateUtilties, i -> 0);
+        Arrays.parallelSetAll(_stateActions, i -> 0);
     }
 
     private double[] createHelperForValueIteration() {
@@ -159,7 +159,7 @@ public final class MDPCalculator {
             long start = System.nanoTime();
             diff = _innerValueIterationOneRound(helper);
             long end = System.nanoTime();
-            System.out.printf("Iter: %d, diff: %f, time: %d ns%n", i++, diff, end - start);
+            System.out.printf("Iter: %d, diff: %f, time: %f ns%n", i++, diff, (end - start) / 1000000000.0);
         } while (diff > threshold);
     }
 
