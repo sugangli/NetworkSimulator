@@ -12,11 +12,9 @@ import edu.rutgers.winlab.simulator.core.ISerializable;
 import edu.rutgers.winlab.simulator.core.Serial;
 import edu.rutgers.winlab.simulator.core.SimulatorQueue;
 import edu.rutgers.winlab.simulator.gaming.common.Frame;
-import static edu.rutgers.winlab.simulator.gaming.common.GameClient.FRAME_INTERVAL;
 import edu.rutgers.winlab.simulator.gaming.common.Packet;
 import edu.rutgers.winlab.simulator.gaming.common.UserEvent;
-import java.util.LinkedList;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  *
@@ -35,7 +33,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
     private final EventHandlerQueue<UserEvent> _userInputQueue;
 
     public GameClient(String name, SimulatorQueue<ISerializable> innerIncomingQueue,
-            String serverName, Consumer<UserEvent> eventReceivedHandler) {
+            String serverName, BiConsumer<edu.rutgers.winlab.simulator.gaming.common.GameClient, UserEvent> eventReceivedHandler) {
         super(name, innerIncomingQueue, serverName, eventReceivedHandler);
         _userInputQueue = new EventHandlerQueue<>(new FIFOQueue(name + "_INPUT", Integer.MAX_VALUE), this::_gameLogic);
     }
@@ -52,16 +50,31 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
 
     @Override
     protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
-        System.out.printf("[%d] CR %s received %s%n", EventQueue.now(), getName(), param);
+//        System.out.printf("[%d] CR %s received %s%n", EventQueue.now(), getName(), param);
         long processTime = getDecoderProcessingTime();
-        Frame frame = (Frame)((Packet)param).getPayload();
-        
+        Frame frame = (Frame) ((Packet) param).getPayload();
+
         EventQueue.addEvent(EventQueue.now() + processTime, this::_showFrame, frame);
         return getDecoderProcessingTime();
     }
-    
+
+    private long lastFrame = -1;
+    private long totalFrameDelays = 0;
+    private int totalFrames = 0;
+
     private void _showFrame(Object... args) {
-        Frame f = (Frame)args[0];
-        f.forEachContainedEvent(_eventReceivedHandler);
+        long now = EventQueue.now();
+        if (lastFrame != -1) {
+            totalFrameDelays += now - lastFrame;
+            totalFrames++;
+        }
+        lastFrame = now;
+        Frame f = (Frame) args[0];
+        f.forEachContainedEvent(e -> _eventReceivedHandler.accept(this, e));
+    }
+
+    @Override
+    public double getAvgFrameLatency() {
+        return ((double) totalFrameDelays) / totalFrames;
     }
 }

@@ -16,7 +16,7 @@ import edu.rutgers.winlab.simulator.gaming.common.Router;
 import edu.rutgers.winlab.simulator.gaming.edge.GameEdge;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -67,7 +67,7 @@ public class GameClientTest {
         GameServer s;
         GameEdge e1 = null, e2 = null;
 
-        Consumer<UserEvent> handler = (UserEvent evt) -> {
+        BiConsumer<GameClient, UserEvent> handler = (c, evt) -> {
             LinkedList<Long> l = packetDurations.get(evt.getId());
             l.addLast(EventQueue.now());
         };
@@ -137,7 +137,7 @@ public class GameClientTest {
                 LinkedList<Long> l;
                 packetDurations.put(v, l = new LinkedList<>());
                 l.addLast(EventQueue.now());
-                c1.handleUserEvent(new UserEvent(v, 100 * ISerializable.BYTE, (v - 9) % 10 != 0));
+                c1.handleUserEvent(new UserEvent(c1.getName(), v, 100 * ISerializable.BYTE, (v - 9) % 10 != 0));
             }, i);
         }
         EventQueue.addEvent(EventQueue.now() + 1200 * EventQueue.MILLI_SECOND, (args) -> ((GameClient) args[0]).stop(), c1);

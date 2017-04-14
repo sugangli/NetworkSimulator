@@ -1,5 +1,7 @@
 package edu.rutgers.winlab.simulator.core;
 
+import edu.rutgers.winlab.simulator.gaming.common.Packet;
+import edu.rutgers.winlab.simulator.gaming.common.UserEvent;
 import java.util.LinkedList;
 
 // TODO: should add handler when queue drops packets
@@ -40,16 +42,21 @@ public class FIFOQueue<T> extends SimulatorQueue<T> {
         int diff = getSize() - _capacity;
         while (diff > 0 && _innerQueue.size() > 0) {
             T node = _innerQueue.getLast();
-            System.out.printf("Drop Packet: %s%n", node.toString());
+            if (node instanceof Packet && ((Packet) node).getPayload() instanceof UserEvent) {
+                System.out.printf("Drop Packet(%s): %s%n", getName(), node.toString());
+            }
+//            System.out.printf("Drop Packet: %s%n", node.toString());
             _innerQueue.removeLast();
             diff--;
+            totalDropCount++;
         }
 
         while (diff > 0) {
             T node = _innerQueuePrioritized.getLast();
-            System.out.printf("Drop Packet: %s%n", node.toString());
+//            System.out.printf("Drop Packet: %s%n", node.toString());
             _innerQueuePrioritized.removeLast();
             diff--;
+            totalDropCount++;
         }
     }
 

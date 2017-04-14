@@ -31,6 +31,12 @@ public abstract class EndHost extends Node {
         }
     }
 
+    public Node getFirstHop() {
+        return _firstHop;
+    }
+    
+    
+
     public void sendPacket(ISerializable packet, boolean prioritized) {
         super._sendPacket(packet, _firstHop, prioritized);
     }

@@ -15,7 +15,8 @@ import edu.rutgers.winlab.simulator.core.SimulatorQueue;
 import edu.rutgers.winlab.simulator.gaming.common.Frame;
 import edu.rutgers.winlab.simulator.gaming.common.Packet;
 import java.util.LinkedList;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  *
@@ -23,19 +24,35 @@ import java.util.function.Consumer;
  */
 public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameClient {
 
-    private static long getGameLogicProcessingTime() {
+    public static Supplier<Long> getGameLogicProcessingTime;
+    public static Supplier<Long> getRenderProcessingTime;
+    public static Supplier<Long> getUpdateProcessingTime;
+
+    public static long getGameLogicProcessingTime_LEC() {
         return 10 * EventQueue.MILLI_SECOND;
     }
 
-    private static long getRenderProcessingTime() {
-        return 30 * EventQueue.MILLI_SECOND;
+    public static long getRenderProcessingTime_LEC() {
+        return 200 * EventQueue.MILLI_SECOND;
     }
 
-    private static long getUpdateProcessingTime() {
-        return 20 * EventQueue.MILLI_SECOND;
+    public static long getUpdateProcessingTime_LEC() {
+        return 8 * EventQueue.MILLI_SECOND;
     }
 
-    private static long getFirstRenderDelayTime() {
+    public static long getGameLogicProcessingTime_HEC() {
+        return 3 * EventQueue.MILLI_SECOND;
+    }
+
+    public static long getRenderProcessingTime_HEC() {
+        return 10 * EventQueue.MILLI_SECOND;
+    }
+
+    public static long getUpdateProcessingTime_HEC() {
+        return 2 * EventQueue.MILLI_SECOND;
+    }
+
+    public static long getFirstRenderDelayTime() {
         return FRAME_INTERVAL;
     }
 
@@ -44,7 +61,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
 
     public GameClient(String name, SimulatorQueue<ISerializable> innerIncomingQueue,
             String serverName,
-            Consumer<UserEvent> eventReceivedHandler) {
+            BiConsumer<edu.rutgers.winlab.simulator.gaming.common.GameClient, UserEvent> eventReceivedHandler) {
         super(name, innerIncomingQueue, serverName, eventReceivedHandler);
         new Serial<>(this::_delayBeforeFirstRender, 0);
         _userInputQueue = new EventHandlerQueue<>(new FIFOQueue(name + "_INPUT", Integer.MAX_VALUE), this::_gameLogic);
@@ -61,19 +78,34 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
         return getFirstRenderDelayTime();
     }
 
+    private long lastFrame = -1;
+    private long totalFrameDelays = 0;
+    private int totalFrames = 0;
+
     private long _renderLogic(Serial<Integer> s, Integer parameter) {
         if (!isRunning()) {
             return 0;
         }
-        long processTime = getRenderProcessingTime();
-        EventQueue.addEvent(EventQueue.now() + processTime, (args) -> {
+        long now = EventQueue.now();
+        if (lastFrame != -1) {
+            totalFrameDelays += now - lastFrame;
+            totalFrames++;
+        }
+        lastFrame = now;
+        long processTime = getRenderProcessingTime.get();
+        EventQueue.addEvent(now + processTime, (args) -> {
             LinkedList<UserEvent> l = (LinkedList<UserEvent>) args[0];
-            l.forEach(_eventReceivedHandler);
+            l.forEach(e -> _eventReceivedHandler.accept(this, e));
         }, new LinkedList<>(_toRenders));
-        System.out.printf("[%d] CH %s UEs=%s%n", EventQueue.now(), getName(), _toRenders);
+//        System.out.printf("[%d] CH %s UEs=%s%n", EventQueue.now(), getName(), _toRenders);
         _toRenders.clear();
         s.addEvent(this::_renderLogic, 0);
-        return Math.max(getRenderProcessingTime(), FRAME_INTERVAL);
+        return Math.max(processTime, FRAME_INTERVAL);
+    }
+
+    @Override
+    public double getAvgFrameLatency() {
+        return ((double) totalFrameDelays) / totalFrames;
     }
 
     private long _gameLogic(Serial<UserEvent> s, UserEvent parameter) {
@@ -82,7 +114,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
         } else {
             s.addEvent(this::_forwardEventToRender, parameter);
         }
-        return getGameLogicProcessingTime();
+        return getGameLogicProcessingTime.get();
     }
 
     // from event handler
@@ -102,7 +134,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
     @Override
     protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
         //event received, send the event to 
-        System.out.printf("[%d] CR %s received %s%n", EventQueue.now(), getName(), param);
+//        System.out.printf("[%d] CR %s received %s%n", EventQueue.now(), getName(), param);
         s.addEvent(this::_forwardEventsToRenderer, param);
 //        s.addEvent((ss, p) -> {
 //            // TODO: get decapsulate evt from network packet p
@@ -110,7 +142,7 @@ public class GameClient extends edu.rutgers.winlab.simulator.gaming.common.GameC
 ////            _toRenders.addLast(evt);
 //            return 0;
 //        }, param);
-        return getUpdateProcessingTime();
+        return getUpdateProcessingTime.get();
     }
 
 }

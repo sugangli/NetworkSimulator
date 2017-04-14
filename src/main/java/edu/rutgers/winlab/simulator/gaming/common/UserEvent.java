@@ -13,14 +13,20 @@ import edu.rutgers.winlab.simulator.core.ISerializable;
  */
 public class UserEvent implements ISerializable {
 
+    private final String _sender;
     private final int _id;
     private final int _size;
     private final boolean _gameEvent;
 
-    public UserEvent(int id, int size, boolean gameEvent) {
+    public UserEvent(String sender, int id, int size, boolean gameEvent) {
+        this._sender = sender;
         this._id = id;
         this._size = size;
         this._gameEvent = gameEvent;
+    }
+
+    public String getSender() {
+        return _sender;
     }
 
     public int getId() {
@@ -31,7 +37,6 @@ public class UserEvent implements ISerializable {
         return _gameEvent;
     }
 
-
     @Override
     public int getSize() {
         return _size;
@@ -41,7 +46,5 @@ public class UserEvent implements ISerializable {
     public String toString() {
         return String.format("UE{id:%d,size:%d,isGame:%b}", _id, _size, _gameEvent);
     }
-    
-    
 
 }

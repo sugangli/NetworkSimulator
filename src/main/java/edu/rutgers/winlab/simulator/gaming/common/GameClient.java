@@ -10,7 +10,7 @@ import edu.rutgers.winlab.simulator.core.ISerializable;
 import edu.rutgers.winlab.simulator.core.ReliableEndHost;
 import edu.rutgers.winlab.simulator.core.Serial;
 import edu.rutgers.winlab.simulator.core.SimulatorQueue;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  *
@@ -18,13 +18,13 @@ import java.util.function.Consumer;
  */
 public abstract class GameClient extends ReliableEndHost {
 
-    public static final long FRAME_INTERVAL = 1 * EventQueue.SECOND / 30;
+    public static final long FRAME_INTERVAL = 1 * EventQueue.SECOND / 60;
 
-    protected Consumer<UserEvent> _eventReceivedHandler;
+    protected BiConsumer<GameClient, UserEvent> _eventReceivedHandler;
     private boolean _running = true;
     private final String _serverName;
 
-    public GameClient(String name, SimulatorQueue<ISerializable> innerIncomingQueue, String serverName, Consumer<UserEvent> eventReceivedHandler) {
+    public GameClient(String name, SimulatorQueue<ISerializable> innerIncomingQueue, String serverName, BiConsumer<GameClient, UserEvent> eventReceivedHandler) {
         super(name, innerIncomingQueue);
         _serverName = serverName;
         _eventReceivedHandler = eventReceivedHandler;
@@ -37,9 +37,11 @@ public abstract class GameClient extends ReliableEndHost {
     protected long sendEventToServer(Serial<UserEvent> s, UserEvent parameter) {
         Packet pkt = new Packet(getName(), _serverName, parameter);
         sendPacket(pkt, false);
-        System.out.printf("[%d] CS %s send %s%n", EventQueue.now(), getName(), pkt);
+//        System.out.printf("[%d] CS %s send %s%n", EventQueue.now(), getName(), pkt);
         return 0;
     }
+    
+    public abstract double getAvgFrameLatency();
 
     public abstract void handleUserEvent(UserEvent e);
 
@@ -50,5 +52,4 @@ public abstract class GameClient extends ReliableEndHost {
     public boolean isRunning() {
         return _running;
     }
-
 }

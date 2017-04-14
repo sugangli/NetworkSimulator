@@ -10,8 +10,6 @@ import edu.rutgers.winlab.simulator.core.ISerializable;
 import edu.rutgers.winlab.simulator.core.Serial;
 import edu.rutgers.winlab.simulator.core.SimulatorQueue;
 import edu.rutgers.winlab.simulator.gaming.common.Frame;
-import static edu.rutgers.winlab.simulator.gaming.common.GameServer.GAME_NAME_SUFFIX;
-import static edu.rutgers.winlab.simulator.gaming.common.GameServer.MAX_REFRESH_FPS;
 import edu.rutgers.winlab.simulator.gaming.common.Packet;
 import edu.rutgers.winlab.simulator.gaming.common.UserEvent;
 import java.util.HashMap;
@@ -40,7 +38,7 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
     //wait a frame before real logic starts
     private long _beforeServerGameLogic(Serial<String> s, String gameName) {
         s.addEvent(this::_serverGameLogic, gameName);
-        return EventQueue.SECOND / MAX_REFRESH_FPS;
+        return GameClient.FRAME_INTERVAL;
     }
 
     private long _serverGameLogic(Serial<String> s, String gameName) {
@@ -58,7 +56,7 @@ public class GameServer extends edu.rutgers.winlab.simulator.gaming.common.GameS
                     this::_sendFrame, pkt);
         }
         s.addEvent(this::_serverGameLogic, gameName);
-        return EventQueue.SECOND / MAX_REFRESH_FPS;
+        return GameClient.FRAME_INTERVAL;
     }
 
     private void _sendFrame(Object... parameters) {

@@ -36,7 +36,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>edu.rutgers.winlab.simulator.common.SimulationRunner</mainClass>
+                            <mainClass>edu.rutgers.winlab.simulator.gaming.common.SimulationRunner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

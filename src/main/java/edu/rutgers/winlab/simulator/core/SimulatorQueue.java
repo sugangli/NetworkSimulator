@@ -4,6 +4,12 @@ package edu.rutgers.winlab.simulator.core;
 public abstract class SimulatorQueue<T> {
 
     private final String _name;
+    protected static long totalDropCount = 0;
+
+    public static long getTotalDropCount() {
+        return totalDropCount;
+    }
+
 
     public String getName() {
         return _name;

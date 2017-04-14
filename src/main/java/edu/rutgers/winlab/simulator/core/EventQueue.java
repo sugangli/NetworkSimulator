@@ -26,6 +26,10 @@ public class EventQueue {
     public static long now() {
         return DEFAULT._getNow();
     }
+    
+    public static int size() {
+        return DEFAULT._size();
+    }
 
     PriorityQueue<Event> _events = new PriorityQueue<>();
     private long _now;
@@ -36,6 +40,10 @@ public class EventQueue {
 
     public long _getNow() {
         return this._now;
+    }
+    
+    public int _size() {
+        return _events.size();
     }
 
     private void _run() {

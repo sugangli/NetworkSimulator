@@ -1,5 +1,6 @@
 package edu.rutgers.winlab.simulator.core;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.function.BiConsumer;
@@ -32,6 +33,8 @@ public abstract class Node {
         n2._removeLink(n1);
     }
 
+    public static PrintStream NetTrafficWriter = System.out;
+
     private final String _name;
     private final HashMap<Node, Link> _neighbors = new HashMap<>();
     private final EventHandlerQueue<ISerializable> _incomingQueue;
@@ -52,6 +55,16 @@ public abstract class Node {
     @Override
     public String toString() {
         return String.format("Node:{Name:%s}", _name);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
     }
 
     protected abstract long _processPacket(Serial<ISerializable> s, ISerializable param);
@@ -83,7 +96,19 @@ public abstract class Node {
 
     private void _removeLink(Node target) {
         Link l = _neighbors.remove(target);
+        reportLinkStat(l);
+
         l._disConnect(this::_handleFailedPacket);
+    }
+
+    public void reportLinksStat() {
+        for (Link l : _neighbors.values()) {
+            reportLinkStat(l);
+        }
+    }
+
+    private void reportLinkStat(Link l) {
+        NetTrafficWriter.printf("%s->%s\t%d\t%d%n", this.getName(), l._targetNode.getName(), l.getTotalTraffic(), l.getTotalPacketCount());
     }
 
     public class Link {
@@ -170,6 +195,7 @@ public abstract class Node {
             //_outgoingQueue.clear();
             _outgoingQueue.clear(failedPacketHandler);
         }
+
     }
 
 }

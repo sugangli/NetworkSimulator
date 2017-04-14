@@ -10,6 +10,7 @@ import edu.rutgers.winlab.simulator.core.ISerializable;
 import edu.rutgers.winlab.simulator.core.Node;
 import edu.rutgers.winlab.simulator.core.Serial;
 import edu.rutgers.winlab.simulator.core.SimulatorQueue;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -44,9 +45,24 @@ public class Router extends Node {
         }
     }
 
+    public void clearRouting(String dest) {
+        routing.remove(dest);
+    }
+    
+    public void printRouting(PrintStream ps){
+        ps.printf("=====Routing on %s=====%n", getName());
+        routing.forEach((name, nextHops)->{
+            ps.printf("%s:", name);
+            nextHops.forEach(nh->{
+                ps.printf(" %s", nh.getName());
+            });
+            ps.println();
+        });
+    }
+
     @Override
     protected long _processPacket(Serial<ISerializable> s, ISerializable param) {
-        System.out.printf("[%d] RR %s received %s%n", EventQueue.now(), getName(), param);
+//        System.out.printf("[%d] RR %s received %s%n", EventQueue.now(), getName(), param);
         s.addEvent(this::_innerSendPacket, param);
         return _getPacketProcesingTIme();
     }
@@ -57,9 +73,11 @@ public class Router extends Node {
         HashSet<Node> nextHops = routing.get(dst);
         if (nextHops != null) {
             nextHops.forEach((nextHop) -> {
-                System.out.printf("[%d] RS %s sent %s %s%n", EventQueue.now(), getName(), nextHop.getName(), param);
+//                System.out.printf("[%d] RS %s sent %s %s%n", EventQueue.now(), getName(), nextHop.getName(), param);
                 _sendPacket(param, nextHop, false);
             });
+        } else {
+            System.out.printf("[%d] RD %s discard %s%n", EventQueue.now(), getName(), param);
         }
         return 0;
     }
